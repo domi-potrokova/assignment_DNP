@@ -4,7 +4,7 @@ public class Post
 {
     //property, backed by method (getter/setter) = C#'s way of controling access to
     //an obj data while still using simple obj.PropertyName syntax
-    public int Id { get; set; }
+    public int Id { get; set; } 
     public string Title { get; set; }
     public string Body { get; set; }
     public int UserId { get; set; } //FK only not navigation property
