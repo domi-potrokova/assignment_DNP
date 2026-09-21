@@ -5,18 +5,30 @@ namespace InMemoryRepositories;
 
 public class CommentInMemoryRepository : ICommentRepository
 {
-    List<Comment> comments = new();
+   private readonly List<Comment> comments = new();
 
-    public Comment Add(Comment comment)
+   public CommentInMemoryRepository()
+   {
+       SeedData();
+   }
+
+   private void SeedData()
+   {
+       comments.Add(new Comment(1, "We are happy to have you", 1, 1));
+       comments.Add(new Comment(2, "Wooooow", 2, 2));
+       comments.Add(new Comment(3, "I don't want to", 1, 3));
+   }
+
+    public Task<Comment> AddAsync(Comment comment)
     {
         comment.Id = comments.Any()
             ? comments.Max(c => c.Id) + 1
             : 1;
         comments.Add(comment);
-        return comment;
+        return Task.FromResult(comment);
     }
 
-    public void Update(Comment comment)
+    public Task UpdateAsync(Comment comment)
     {
         Comment? existingComment = comments.SingleOrDefault(c => c.Id == comment.Id);
         if (existingComment is null)
@@ -26,9 +38,10 @@ public class CommentInMemoryRepository : ICommentRepository
         }
         comments.Remove(existingComment);
         comments.Add(comment);
+        return Task.CompletedTask;
     }
 
-    public void Delete(int id)
+    public Task DeleteAsync(int id)
     {
         Comment? commentToRemove = comments.SingleOrDefault(c => c.Id == id);
         if (commentToRemove is null)
@@ -37,9 +50,10 @@ public class CommentInMemoryRepository : ICommentRepository
                 $"Comment with id {id} does not exist");
         }
         comments.Remove(commentToRemove);
+        return Task.CompletedTask;
     }
 
-    public Comment GetSingle(int id)
+    public Task<Comment> GetSingleAsync(int id)
     {
         Comment? comment = comments.SingleOrDefault(c => c.Id == id);
         if (comment is null)
@@ -47,7 +61,7 @@ public class CommentInMemoryRepository : ICommentRepository
             throw new InvalidOperationException(
                 $"Comment with id {id} not found");
         }
-        return comment;
+        return Task.FromResult(comment);
     }
 
     public IQueryable<Comment> GetMany()

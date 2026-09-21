@@ -4,9 +4,9 @@ namespace RepositoryContracts;
 
 public interface IPostRepository
 {
-    Post Add(Post post); //returns created post
-    void Update(Post post); //replaces existing post
-    void Delete(int id); //removes post
-    Post GetSingle(int id); //returns post matching the given ID
+    Task<Post> AddAsync(Post post); //returns created post
+    Task UpdateAsync(Post post); //replaces existing post
+    Task DeleteAsync(int id); //removes post
+    Task<Post> GetSingleAsync(int id); //returns post matching the given ID
     IQueryable<Post> GetMany(); //loops over to extract the relevant entities
 }

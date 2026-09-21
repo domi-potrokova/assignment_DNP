@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using RepositoryContracts;
 using Entities;
 
@@ -5,18 +6,29 @@ namespace InMemoryRepositories;
 
 public class UserInMemoryRepository : IUserRepository
 {
-    List<User> users = new();
+    private readonly List<User> users = new();
 
-    public User Add(User user)
+    public UserInMemoryRepository()
+    {
+        SeedData();
+    }
+
+    private void SeedData()
+    {
+        users.Add(new User("John", "abdul", 1));
+        users.Add(new User("Domi", "domi", 2));
+        users.Add(new User("Jane", "janie", 3));
+    }
+    public Task<User> AddAsync(User user)
     {
         user.Id = users.Any()
             ? users.Max(u => u.Id) + 1
             : 1;
         users.Add(user);
-        return user;
+        return Task.FromResult(user);
     }
 
-    public void Update(User user)
+    public Task UpdateAsync(User user)
     {
         User? existingUser = users.SingleOrDefault(u => u.Id == user.Id);
         if (existingUser is null)
@@ -26,9 +38,10 @@ public class UserInMemoryRepository : IUserRepository
         }
         users.Remove(existingUser);
         users.Add(user);
+        return Task.CompletedTask;
     }
 
-    public void Delete(int id)
+    public Task DeleteAsync(int id)
     {
         User? userToRemove = users.SingleOrDefault(u => u.Id == id);
         if (userToRemove is null)
@@ -37,9 +50,10 @@ public class UserInMemoryRepository : IUserRepository
                 $"User with id {id} does not exist");
         }
         users.Remove(userToRemove);
+        return Task.CompletedTask;
     }
 
-    public User GetSingle(int id)
+    public Task<User> GetSingleAsync(int id)
     {
         User? user = users.SingleOrDefault(u => u.Id == id);
         if (user is null)
@@ -47,7 +61,7 @@ public class UserInMemoryRepository : IUserRepository
             throw new InvalidOperationException(
                 $"User with id {id} not found");
         }
-        return user;
+        return Task.FromResult(user);
     }
 
     public IQueryable<User> GetMany()
