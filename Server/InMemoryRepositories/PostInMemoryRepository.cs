@@ -36,7 +36,7 @@ public class PostInMemoryRepository : IPostRepository
         //? = marked as nullable ref type(variable is allowed null)
         //SingleOrDefault = searches the posts list for the one post whose ID matches the incoming post.id
         //single = thr exception
-        //singleOrDefault = returns nullif nothing matches
+        //singleOrDefault = returns null if nothing matches
         Post? existingPost = posts.SingleOrDefault(p => p.Id == post.Id);
         if (existingPost is null)
         {
