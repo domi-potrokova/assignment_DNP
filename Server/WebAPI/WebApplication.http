@@ -1,0 +1,57 @@
+@WebApplication_HostAddress = http://localhost:5164
+
+### Create a user
+POST {{WebApplication_HostAddress}}/users
+Content-Type: application/json
+
+{
+  "userName": "Domi",
+  "password": "pass123"
+}
+
+### List all users
+GET {{WebApplication_HostAddress}}/users
+
+### Get single user
+GET {{WebApplication_HostAddress}}/users/1
+
+### Filter users by username
+GET {{WebApplication_HostAddress}}/users?userName=dom
+
+### Create a post
+POST {{WebApplication_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "Welcome",
+  "body": "First real post",
+  "userId": 1
+}
+
+### Get single post with comments
+GET {{WebApplication_HostAddress}}/posts/1?includeComments=true
+
+### Filter posts by title
+GET {{WebApplication_HostAddress}}/posts?title=welcome
+
+### Filter posts by author name
+GET {{WebApplication_HostAddress}}/posts?userName=dom
+
+### Create a comment
+POST {{WebApplication_HostAddress}}/comments
+Content-Type: application/json
+
+{
+  "body": "Nice post!",
+  "userId": 1,
+  "postId": 1
+}
+
+### Filter comments by post
+GET {{WebApplication_HostAddress}}/comments?postId=1
+
+### Delete a comment (use the real id you got back)
+DELETE {{WebApplication_HostAddress}}/comments/1
+
+### Confirm 404 on a bad id
+GET {{WebApplication_HostAddress}}/users/9999
