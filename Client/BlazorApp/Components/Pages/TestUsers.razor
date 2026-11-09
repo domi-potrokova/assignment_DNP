@@ -1,0 +1,45 @@
+@page "/test-users"
+@* Without a render mode, the button click does nothing in .NET 8+ Blazor Web Apps *@
+@rendermode InteractiveServer
+@using ApiContracts
+@using BlazorApp.Services
+@inject IUserService UserService
+
+<h3>Users test</h3>
+
+<button @onclick="Load">Load users</button>
+
+@if (error != null)
+{
+    <p style="color:red">@error</p>
+}
+
+@if (users != null)
+{
+    <ul>
+        @foreach (var user in users)
+        {
+            <li>[@user.Id] @user.UserName</li>
+        }
+    </ul>
+}
+
+@code {
+    private IEnumerable<UserDto>? users;
+    private string? error;
+
+    private async Task Load()
+    {
+        try
+        {
+            error = null;
+            // Calls HttpUserService, which sends GET /users to the WebAPI
+            users = await UserService.GetManyUsersAsync();
+        }
+        catch (Exception e)
+        {
+            // The services throw Exception(response) on failures, so show it
+            error = e.Message;
+        }
+    }
+}
