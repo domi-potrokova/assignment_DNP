@@ -1,0 +1,113 @@
+@page "/Posts"
+@rendermode InteractiveServer
+@inject IPostService PostService
+@inject IUserService UserService
+
+<h3>Posts</h3>
+
+<h4>Create post</h4>
+<input placeholder="Title" @bind="title" @bind:event="oninput" />
+<input placeholder="Body" @bind="body" @bind:event="oninput" />
+@* The user picks an author by name, we send the id *@
+<select @bind="userId">
+    <option value="0">-- choose author --</option>
+    @if (users != null)
+    {
+        @foreach (var u in users)
+        {
+            <option value="@u.Id">@u.UserName</option>
+        }
+    }
+</select>
+<button @onclick="CreatePost">Create</button>
+
+@if (error != null)
+{
+    <p style="color:red">@error</p>
+}
+
+<h4>All posts</h4>
+@if (posts == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var post in posts)
+        {
+            <li>
+                @* Link to the single post page, which shows body and comments *@
+                <a href="posts/@post.Id">[@post.Id] @post.Title</a>
+                <button @onclick="() => DeletePost(post.Id)">Delete</button>
+            </li>
+        }
+    </ul>
+}
+@code {
+    private IEnumerable<PostDto>? posts;
+    private IEnumerable<UserDto>? users;
+    private string title = "";
+    private string body = "";
+    private int userId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await UserService.GetManyUsersAsync(); // for the author dropdown
+            await LoadPosts();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+    private async Task LoadPosts()
+    {
+        posts = await PostService.GetManyPostsAsync();
+    }
+
+    private async Task CreatePost()
+    {
+        try
+        {
+            error = null;
+            if (userId == 0)
+            {
+                error = "Choose an author first.";
+                return;
+            }
+
+            await PostService.CreatePostAsync(new CreatePostDto
+            {
+                Title = title,
+                Body = body,
+                UserId = userId
+            });
+            title = "";
+            body = "";
+            await LoadPosts();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+    private async Task DeletePost(int id)
+    {
+        try
+        {
+            error = null;
+            await PostService.DeletePostAsync(id);
+            await LoadPosts();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+}

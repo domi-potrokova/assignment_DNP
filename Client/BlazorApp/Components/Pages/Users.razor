@@ -1,0 +1,95 @@
+@page "/Users"
+@* needed in .Net 8+ Blazor Web apps, otherwise buttons do nothing *@
+@rendermode InteractiveServer
+@inject IUserService UserService
+
+<h3>Users</h3>
+
+<h4>Create user</h4>
+@* oninput updates the field on every keystroke, so the button always sees the latest text*@
+<input placeholder="Username" @bind="newUserName" @bind:event="oninput" />
+<input type="password" placeholder="Password" @bind="newPassword" @bind:event="oninput" />
+<button @onclick="CreateUser">Create</button>
+
+@if (error != null)
+{
+    <p style="color:red">@error</p>
+}
+
+<h4>All users</h4>
+@if (users == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var user in users)
+        {
+            <li>
+                [@user.Id] @user.UserName
+                <button @onclick="() => DeleteUser(user.Id)">Delete</button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IEnumerable<UserDto>? users;
+    private string newUserName = "";
+    private string newPassword = "";
+    private string? error;
+
+    // Runs once when the page opens
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+    
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await UserService.GetManyUsersAsync();
+        }
+        catch (Exception e)
+        {
+            error = e.Message; // the service throws the API's message on failure
+        }
+    }
+    
+    private async Task CreateUser()
+    {
+        try
+        {
+            error = null;
+            // Required properties must be set in the initializer
+            await UserService.CreateUserAsync(new CreateUserDto
+            {
+                UserName = newUserName,
+                Password = newPassword
+            });
+            newUserName = "";
+            newPassword = "";
+            await LoadUsers(); // refresh the list so the new user appears
+        }
+        catch (Exception e)
+        {
+            error = e.Message; // e.g. "Username 'Domi' is already taken."
+        }
+    }
+    
+    private async Task DeleteUser(int id)
+    {
+        try
+        {
+            error = null;
+            await UserService.DeleteUserAsync(id);
+            await LoadUsers();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+}

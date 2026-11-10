@@ -1,0 +1,113 @@
+@* {id:int} takes the number from the URL: /posts/3 ->id = 3 *@
+@page "/posts/{Id:int}"
+@rendermode InteractiveServer
+@inject IPostService PostService
+@inject ICommentService CommentService
+@inject IUserService UserService
+
+@if (error != null)
+{
+    <p style="color:red">@error</p>
+}
+
+@if (post == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h3>@post.Title</h3>
+    <p>by @post.AuthorUserName</p>
+    <p>@post.Body</p>
+
+    <h4>Comments</h4>
+    @if (post.Comments == null || post.Comments.Count == 0)
+    {
+        <p>No comments yet.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var c in post.Comments)
+            {
+                <li>@NameOf(c.UserId): @c.Body</li>
+            }
+        </ul>
+    }
+
+    <h4>Add comment</h4>
+    <input placeholder="Comment" @bind="commentBody" @bind:event="oninput" />
+    <select @bind="commentUserId">
+        <option value="0">-- who are you? --</option>
+        @foreach (var u in users)
+        {
+            <option value="@u.Id">@u.UserName</option>
+        }
+    </select>
+    <button @onclick="AddComment">Add</button>
+}
+
+<p><a href="posts">Back to all posts</a></p>
+<h3>SinglePost</h3>
+
+@code {
+    // Filled in automatically from the route
+    [Parameter] public int Id { get; set; }
+
+    private PostDto? post;
+    private List<UserDto> users = new();
+    private string commentBody = "";
+    private int commentUserId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = (await UserService.GetManyUsersAsync()).ToList();
+            await LoadPost();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+    private async Task LoadPost()
+    {
+        // true = also ask the API for this post's comments
+        post = await PostService.GetSinglePostAsync(Id, true);
+    }
+
+    // The comment only has a UserId, so look the name up in the users list
+    private string NameOf(int userId)
+    {
+        return users.FirstOrDefault(u => u.Id == userId)?.UserName ?? $"user {userId}";
+    }
+
+    private async Task AddComment()
+    {
+        try
+        {
+            error = null;
+            if (commentUserId == 0)
+            {
+                error = "Choose who is commenting.";
+                return;
+            }
+
+            await CommentService.CreateCommentAsync(new CreateCommentDto
+            {
+                Body = commentBody,
+                UserId = commentUserId,
+                PostId = Id // the post we are looking at
+            });
+            commentBody = "";
+            await LoadPost(); // reload so the new comment shows up
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+}
