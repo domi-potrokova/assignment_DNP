@@ -7,7 +7,7 @@
                     <p>You'll have to log in!</p>
                 </NotAuthorized>
             </AuthorizeRouteView>
-            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
+            @* the old RouteView line is removed: AuthorizeRouteView replaces it *@
             <FocusOnNavigate RouteData="routeData" Selector="h1"/>
         </Found>
     </Router>

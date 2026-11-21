@@ -1,0 +1,48 @@
+@page "/"
+@page "/login"
+@using BlazorApp.Auth
+@*inject authenticationState provider, so we can get to simpleauth provider bc we registered it in program.cs*@
+@inject AuthenticationStateProvider AuthProvider 
+@inject NavigationManager navMgr
+
+@*inside the tags we define two views: one for noone logged in + one for when a user is logged in*@
+<AuthorizeView>
+    <NotAuthorized>
+        <h3>Please login</h3>
+        <label>User name:</label>
+        <input type="text" @bind="userName"/>
+        <label>Password:</label>
+        <input type="password" @bind="password"/>
+        @if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <label style="color: red">
+                @errorLabel
+            </label>
+        }
+        <button @onclick="LoginAsync">Log in</button>
+    </NotAuthorized>
+    <Authorized>
+        <h3>Hello, @context.User.Identity.Name</h3>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private string userName;
+    private string password;
+    private string errorLabel;
+
+    private async Task LoginAsync()
+    {
+        errorLabel = "";
+        try
+        {
+            await ((SimpleAuthProvider)AuthProvider).Login(userName, password);
+            navMgr.NavigateTo("/");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            errorLabel = $"Error: {e.Message}";
+        }
+    }
+}
