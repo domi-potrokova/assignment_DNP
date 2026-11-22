@@ -37,7 +37,7 @@ public class CreateUserView
             return; //stop before saving
         }
 
-        User created = await userRepository.AddAsync(new User { UserName = userName, Password = password });
+        User created = await userRepository.AddAsync(new User (userName, password, 0));
         Console.WriteLine($"User created with id: {created.Id}");
     }
 }

@@ -1,0 +1,27 @@
+@page "/"
+@using BlazorApp.Auth
+@inject NavigationManager NavMgr
+@inject AuthenticationStateProvider AuthProvider
+<PageTitle>Home</PageTitle>
+
+<h1>Reddit Clone</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <h3>Hello, @context.User.Identity.Name</h3>
+        <button @onclick="Logout">Log out</button>
+    </Authorized>
+    <NotAuthorized>
+        lol you are not logged in!
+    </NotAuthorized>
+</AuthorizeView>
+Here you can browse interesting posts.
+<button @onclick='() => NavMgr.NavigateTo("login")'>go to login</button>
+
+@code {
+    private void Logout()
+    {
+        // Our provider is a SimpleAuthProvider, so cast to reach its Logout method
+        ((SimpleAuthProvider)AuthProvider).Logout();
+    }
+}

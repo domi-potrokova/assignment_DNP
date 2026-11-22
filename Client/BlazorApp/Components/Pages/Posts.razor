@@ -1,24 +1,18 @@
-@page "/Posts"
+@*author dropdown went away bc the logged in user is the author, only the owner sees the delete button*@
+
+@page "/posts"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
 @inject IPostService PostService
-@inject IUserService UserService
 
 <h3>Posts</h3>
 
 <h4>Create post</h4>
 <input placeholder="Title" @bind="title" @bind:event="oninput" />
 <input placeholder="Body" @bind="body" @bind:event="oninput" />
-@* The user picks an author by name, we send the id *@
-<select @bind="userId">
-    <option value="0">-- choose author --</option>
-    @if (users != null)
-    {
-        @foreach (var u in users)
-        {
-            <option value="@u.Id">@u.UserName</option>
-        }
-    }
-</select>
 <button @onclick="CreatePost">Create</button>
 
 @if (error != null)
@@ -37,26 +31,39 @@ else
         @foreach (var post in posts)
         {
             <li>
-                @* Link to the single post page, which shows body and comments *@
                 <a href="posts/@post.Id">[@post.Id] @post.Title</a>
-                <button @onclick="() => DeletePost(post.Id)">Delete</button>
+                @* Only the author of the post gets a Delete button *@
+                @if (post.UserId == currentUserId)
+                {
+                    <button @onclick="() => DeletePost(post.Id)">Delete</button>
+                }
             </li>
         }
     </ul>
 }
+
 @code {
+    // The framework fills this in because Routes.razor wraps the app in CascadingAuthenticationState
+    [CascadingParameter] public Task<AuthenticationState> State { get; set; } = null!;
+
     private IEnumerable<PostDto>? posts;
-    private IEnumerable<UserDto>? users;
     private string title = "";
     private string body = "";
-    private int userId;
+    private int currentUserId;
     private string? error;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            users = await UserService.GetManyUsersAsync(); // for the author dropdown
+            // Who is logged in? Read the "Id" claim that SimpleAuthProvider stored
+            AuthenticationState authState = await State;
+            ClaimsPrincipal user = authState.User;
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                currentUserId = int.Parse(user.Claims.Single(c => c.Type == "Id").Value);
+            }
+
             await LoadPosts();
         }
         catch (Exception e)
@@ -75,17 +82,11 @@ else
         try
         {
             error = null;
-            if (userId == 0)
-            {
-                error = "Choose an author first.";
-                return;
-            }
-
             await PostService.CreatePostAsync(new CreatePostDto
             {
                 Title = title,
                 Body = body,
-                UserId = userId
+                UserId = currentUserId // the logged-in user is the author, no dropdown needed
             });
             title = "";
             body = "";

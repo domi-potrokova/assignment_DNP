@@ -1,12 +1,15 @@
-@page "/Users"
-@* needed in .Net 8+ Blazor Web apps, otherwise buttons do nothing *@
+@page "/users"
+@* Needed in .NET 8+ Blazor Web Apps, otherwise buttons do nothing *@
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
 @inject IUserService UserService
 
 <h3>Users</h3>
 
 <h4>Create user</h4>
-@* oninput updates the field on every keystroke, so the button always sees the latest text*@
 <input placeholder="Username" @bind="newUserName" @bind:event="oninput" />
 <input type="password" placeholder="Password" @bind="newPassword" @bind:event="oninput" />
 <button @onclick="CreateUser">Create</button>
@@ -28,24 +31,39 @@ else
         {
             <li>
                 [@user.Id] @user.UserName
-                <button @onclick="() => DeleteUser(user.Id)">Delete</button>
+                @* Only show Delete next to the logged-in user's own entry *@
+                @if (user.Id == currentUserId)
+                {
+                    <button @onclick="() => DeleteUser(user.Id)">Delete</button>
+                }
             </li>
         }
     </ul>
 }
 
 @code {
+    // Filled in by the framework, because Routes.razor wraps the app in CascadingAuthenticationState
+    [CascadingParameter] public Task<AuthenticationState> State { get; set; } = null!;
+
     private IEnumerable<UserDto>? users;
     private string newUserName = "";
     private string newPassword = "";
+    private int currentUserId; // the logged-in user, read from the "Id" claim
     private string? error;
 
-    // Runs once when the page opens
     protected override async Task OnInitializedAsync()
     {
+        // Who is logged in? Read the "Id" claim that SimpleAuthProvider stored
+        AuthenticationState authState = await State;
+        ClaimsPrincipal user = authState.User;
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            currentUserId = int.Parse(user.Claims.Single(c => c.Type == "Id").Value);
+        }
+
         await LoadUsers();
     }
-    
+
     private async Task LoadUsers()
     {
         try
@@ -54,16 +72,15 @@ else
         }
         catch (Exception e)
         {
-            error = e.Message; // the service throws the API's message on failure
+            error = e.Message;
         }
     }
-    
+
     private async Task CreateUser()
     {
         try
         {
             error = null;
-            // Required properties must be set in the initializer
             await UserService.CreateUserAsync(new CreateUserDto
             {
                 UserName = newUserName,
@@ -71,14 +88,14 @@ else
             });
             newUserName = "";
             newPassword = "";
-            await LoadUsers(); // refresh the list so the new user appears
+            await LoadUsers();
         }
         catch (Exception e)
         {
-            error = e.Message; // e.g. "Username 'Domi' is already taken."
+            error = e.Message;
         }
     }
-    
+
     private async Task DeleteUser(int id)
     {
         try

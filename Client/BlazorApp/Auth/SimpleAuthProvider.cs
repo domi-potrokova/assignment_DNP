@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using ApiContracts;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
 namespace BlazorApp.Auth;
 
