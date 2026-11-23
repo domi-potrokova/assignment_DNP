@@ -44,14 +44,14 @@ public class CommentController : ControllerBase
         {
             existingComment = await commentRepository.GetSingleAsync(id);
         }
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"Comment with id {id} not found.");
         }
 
-        // only Body is updatable — keep the original UserId and PostId
-        Comment comment = new Comment(id, dto.Body, existingComment.UserId, existingComment.PostId);
-        await commentRepository.UpdateAsync(comment);
+        // only Body is updatable. UserId and PostId stay as they are on the tracked object
+        existingComment.Body = dto.Body;
+        await commentRepository.UpdateAsync(existingComment);
 
         return NoContent();
     }
@@ -105,7 +105,7 @@ public class CommentController : ControllerBase
         if (!string.IsNullOrWhiteSpace(userName))
         {
             List<int> matchingUserIds = userRepository.GetMany()
-                .Where(u => u.UserName.Contains(userName, StringComparison.OrdinalIgnoreCase))
+                .Where(u => u.UserName.ToLower().Contains(userName.ToLower()))
                 .Select(u => u.Id)
                 .ToList();
 

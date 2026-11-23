@@ -1,5 +1,16 @@
 @WebApplication_HostAddress = http://localhost:5164
 
+### 1. who is in the database?
+GET {{WebApplication_HostAddress}}/users
+
+### 2. login directly against the API
+POST {{WebApplication_HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "userName": "Domi",
+  "password": "pass123"
+}
 ### Create a user
 POST {{WebApplication_HostAddress}}/users
 Content-Type: application/json
@@ -55,3 +66,30 @@ DELETE {{WebApplication_HostAddress}}/comments/1
 
 ### Confirm 404 on a bad id
 GET {{WebApplication_HostAddress}}/users/9999
+
+### Login
+POST {{WebApplication_HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "userName": "Domi",
+  "password": "pass123"
+}
+
+### reset Domi's password
+PUT {{WebApplication_HostAddress}}/users/1
+Content-Type: application/json
+
+{
+  "userName": "Domi",
+  "password": "pass123"
+}
+
+### create Abdullahi
+POST {{WebApplication_HostAddress}}/users
+Content-Type: application/json
+
+{
+  "userName": "Abdullahi",
+  "password": "123"
+}

@@ -25,11 +25,12 @@ public class CreateUserView
             Console.WriteLine("Username + password is required");
             return;
         }
-        
+
+        string newName = userName.ToLower();
         //userName must be unique
         //ordinalIgnoreCase makes "Domi" and "DOMI" the same
         bool taken = userRepository.GetMany()
-            .Any(u => u.UserName.Equals(userName, StringComparison.OrdinalIgnoreCase));
+            .Any(u => u.UserName.ToLower() == newName);
 
         if (taken)
         {

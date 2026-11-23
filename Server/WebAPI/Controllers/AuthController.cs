@@ -21,9 +21,16 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public ActionResult<UserDto> Login([FromBody] LoginRequest request)
     {
+        //the lowercase value is computed first outside the query
+        string loginName = request.UserName.ToLower();
+        
         //1. find the user by username(case-sensitive rule as the uniqueness check)
         User? user = userRepository.GetMany().FirstOrDefault(u =>
-            u.UserName.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
+            u.UserName.ToLower() == loginName);
+        
+        // TEMPORARY debug line: remove it afterwards, it prints a password!
+// the quotes make spaces at the start or end visible
+        Console.WriteLine($"DEBUG stored: '{user?.Password}' | received: '{request.Password}'");
         
         //2. user does not exist -> 401
         //3. wrong password -> 401

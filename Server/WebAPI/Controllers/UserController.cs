@@ -31,13 +31,16 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UserDto>> Create(CreateUserDto dto)
     {
+        //added after having db = Equals... can't be translated to SQL by EFC, so we compare lowercase versions
+        string newName = dto.UserName.ToLower();
         //business rule: user name must be unique
         //bool taken = does at least one element in this sequence satisfy the condition i gave? true/false
-        bool taken = userRepository.GetMany() 
+        bool taken = userRepository.GetMany()
             //.Any = calls the method on the thing to left, so userRepo.GetMany() -> .any is called on whatever is returned from that bool call
             //the lambda is condition, it knows that u means User bc .any is being called on IQueryable<User>, so it knows the lambda param must be type of User
             //Does any existing user have the same username (ignoring the case) as the one being created?
-            .Any(u => u.UserName.Equals(dto.UserName, StringComparison.OrdinalIgnoreCase));
+            .Any(u => u.UserName.ToLower() == newName);
+        
         if (taken)
         {
             return Conflict($"Username '{dto.UserName}' is already taken."); //error 409
@@ -70,7 +73,7 @@ public class UserController : ControllerBase
             await userRepository.UpdateAsync(user); 
         }
         //user with that id doesnt exist - nothing to update, need to throw exception otherwise server would crash
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"User with id {id} not found.");
         }
@@ -90,7 +93,7 @@ public class UserController : ControllerBase
             //same as update, ask repo for the user, if it doesn't exist throw exception so the server doesnt crash
             user = await userRepository.GetSingleAsync(id);
         }
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"User with id {id} not found");
         }
@@ -120,7 +123,7 @@ public class UserController : ControllerBase
         //optional filter: "users with some specific word in their username" (from my org requirement)
         if (!string.IsNullOrWhiteSpace(userName))
         {
-            users = users.Where(u => u.UserName.Contains(userName, StringComparison.OrdinalIgnoreCase));
+            users = users.Where(u => u.UserName.ToLower().Contains(userName.ToLower()));
             //u lambda knows its user bc it comes from IQueryable<User>
         }
         
@@ -141,7 +144,7 @@ public class UserController : ControllerBase
         {
             await userRepository.DeleteAsync(id);
         }
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"User with id {id} not found");
         }

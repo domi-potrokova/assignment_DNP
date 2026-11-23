@@ -66,21 +66,24 @@ public class PostController : ControllerBase //controllerBase = base class every
         
         //IMPORTANT: if the DTO contains every field the entity's constructor needs = build it directly from DTO
                     //if the DTO is missing a field on purpose (i dont want it updatable) = must fetch the existing entity first to recover the missing value
-        
-        Post existingPost;
-        try
-        {
-            existingPost = await postRepository.GetSingleAsync(id); //bc of the missing userId, fetching from repo
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound($"Post with id {id} not found");
-        }
-        //keep the original userId, only title and body change
-        Post post = new Post(id, dto.Title, dto.Body, existingPost.UserId);
-        await postRepository.UpdateAsync(post);
+                    
+                    Post existingPost;
+                    try 
+                    {
+                        existingPost = await postRepository.GetSingleAsync(id);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        return NotFound($"Post with id {id} not found");
+                    }
 
-        return NoContent(); //204 success
+        // change only title and body on the object EFC already tracks.
+        // UserId stays as it was, so no new Post object is needed.
+                    existingPost.Title = dto.Title;
+                    existingPost.Body = dto.Body;
+                    await postRepository.UpdateAsync(existingPost);
+
+                    return NoContent(); //204 success
     }
     
     //GET/posts/{id}
@@ -92,7 +95,7 @@ public class PostController : ControllerBase //controllerBase = base class every
         {
             post = await postRepository.GetSingleAsync(id);
         }
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"Post with id {id} not found");
         }
@@ -139,7 +142,7 @@ public class PostController : ControllerBase //controllerBase = base class every
         
         if (!string.IsNullOrWhiteSpace(title))
         {
-            posts = posts.Where(p => p.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            posts = posts.Where(p => p.Title.ToLower().Contains(title.ToLower())); 
         }
         if (userId.HasValue)
         {
@@ -150,7 +153,7 @@ public class PostController : ControllerBase //controllerBase = base class every
             // Post only stores UserId, so filtering by author name means
             // first finding which user ids match that name, then filtering posts by those ids.
             List<int> matchingUserIds = userRepository.GetMany()
-                .Where(u => u.UserName.Contains(userName, StringComparison.OrdinalIgnoreCase))
+                .Where(u => u.UserName.ToLower().Contains(userName.ToLower()))
                 .Select(u => u.Id)
                 .ToList();
             posts = posts.Where(p => matchingUserIds.Contains(p.UserId));
@@ -181,7 +184,7 @@ public class PostController : ControllerBase //controllerBase = base class every
         {
             await postRepository.DeleteAsync(id);
         }
-        catch (InvalidOperationException)
+        catch (KeyNotFoundException)
         {
             return NotFound($"Post with id {id} not found");
         }

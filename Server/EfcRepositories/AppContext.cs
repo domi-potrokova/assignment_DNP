@@ -13,6 +13,8 @@ public class AppContext : DbContext
     //we specify to use Sqlite, and the db file is called "app.db"
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=app.db");
+        // absolute path = the Web API, CLI and migrations all use the same file.
+        // this is the app.db that sits inside the EfcRepositories project folder
+        optionsBuilder.UseSqlite(@"Data Source=C:\Users\domin\RiderProjects\DNP_assignmnet\Server\EfcRepositories\app.db");
     }
 }
